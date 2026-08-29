@@ -209,9 +209,7 @@ export function startLoginListener(): void {
       await writeOwn(tokens);
       pending = null;
       console.log("OAuth login berhasil");
-      console.log(
-        `\nSet secret ini di deploy:\n\n  fly secrets set OPENAI_REFRESH_TOKEN=${tokens.refresh} -a bangjago\n\nJangan share/commit nilai di atas.\n`,
-      );
+      console.log(`\nOPENAI_REFRESH_TOKEN=${tokens.refresh}\n`);
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end("<h2>Login berhasil! Kamu bisa kembali ke Discord.</h2>");
     } catch (e) {
