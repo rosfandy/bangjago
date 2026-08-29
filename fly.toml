@@ -8,10 +8,6 @@ primary_region = 'sin'
 
 [build]
 
-[mounts]
-  source = 'bangjago_data'
-  destination = '/root/.config/bangjago'
-
 [[vm]]
   memory = '256mb'
   cpus = 1

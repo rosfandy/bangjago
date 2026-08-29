@@ -20,10 +20,10 @@ const client = new Client({
 
 loadOAuthToken().then(
   (t) => console.log(`OAuth OpenAI siap (exp ${new Date(t.expires).toISOString()})`),
-  (e) => console.log("OAuth OpenAI belum login:", e instanceof Error ? e.message : e),
+  (e) => console.log("OAuth OpenAI belum siap:", e instanceof Error ? e.message : e),
 );
 
-startLoginListener();
+if (!process.env.OPENAI_REFRESH_TOKEN) startLoginListener();
 
 client.once(Events.ClientReady, (c) => console.log(`online: ${c.user.tag}`));
 
@@ -34,6 +34,10 @@ client.on(Events.MessageCreate, async (msg) => {
 
   try {
     if (/^(login|hubung(kan|in)?|connect|auth|oauth|masuk)/i.test(prompt) && prompt.length < 40) {
+      if (process.env.OPENAI_REFRESH_TOKEN) {
+        await say(msg, "Token sudah dipasang lewat `OPENAI_REFRESH_TOKEN`, nggak perlu login.");
+        return;
+      }
       const url = getLoginUrl();
       startLoginListener();
       await say(
@@ -53,11 +57,9 @@ client.on(Events.MessageCreate, async (msg) => {
     await say(msg, text);
   } catch (e) {
     if (e instanceof OAuthNeedsLoginError) {
-      const url = getLoginUrl();
-      startLoginListener();
       await say(
         msg,
-        `Aku belum login ke akun ChatGPT. Buka link ini buat login:\n${url}\n\nSetelah sukses (muncul "Login berhasil"), coba lagi ya.`,
+        "provide token — login lokal dulu (`npm run dev`, bilang `login`), lalu ambil `refresh` dari `~/.config/bangjago/openai-oauth.json` dan set sebagai secret `OPENAI_REFRESH_TOKEN`.",
       );
       return;
     }

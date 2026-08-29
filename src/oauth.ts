@@ -23,8 +23,10 @@ let refreshPromise: Promise<void> | null = null;
 let loginListener: Server | null = null;
 let pending: { verifier: string; challenge: string; state: string } | null = null;
 
+export const ENV_REFRESH_TOKEN = process.env.OPENAI_REFRESH_TOKEN;
+
 export class OAuthNeedsLoginError extends Error {
-  constructor(msg = "OpenAI OAuth belum login") {
+  constructor(msg = "provide token") {
     super(msg);
     this.name = "OAuthNeedsLoginError";
   }
@@ -67,6 +69,11 @@ export async function loadOAuthToken(): Promise<{
   expires: number;
 }> {
   if (cached) return cached;
+  if (ENV_REFRESH_TOKEN) {
+    cached = { access: "", refresh: ENV_REFRESH_TOKEN, expires: 0 };
+    await refreshAccessToken();
+    return cached!;
+  }
   const own = await readOwn();
   if (!own) throw new OAuthNeedsLoginError();
   cached = own;
