@@ -1,19 +1,14 @@
-# Bangjago — Discord Bot Ahli Cyber Security
+# Bangjago
 
-Bot Discord yang ditugaskan untuk membantu seputar **keamanan siber**: pentest, jaringan, kripto, malware analysis, hardening, incident response, secure coding, OSINT, CTF, dan forensik. Ditenagai oleh **GPT-5.6 Luna via OAuth ChatGPT** (tanpa biaya API per-token), streaming penuh tanpa terpotong, dan bisa mengontrol Discord langsung — bikin thread, channel, sampai kirim file.
+Bot Discord untuk tanya-jawab keamanan siber: pentest, jaringan, kripto, malware analysis, hardening, incident response, secure coding, OSINT, CTF, forensik.
 
-## Fitur
+Backend-nya akun ChatGPT lewat OAuth, bukan API key, jadi tidak ada biaya per-token. Jawaban di-stream supaya tidak kepotong di tengah. Bot juga bisa bikin thread, bikin channel, dan kirim file.
 
-- 💬 **Jawab via AI** — bertanya apa saja soal cyber security, dijawab dalam Bahasa Indonesia dengan contoh command.
-- 🎯 **Knows CTF** — materi jeopardy (web, crypto, pwn, reverse, forensik, OSINT), write-up, dan pembahasan challenge.
-- 🧵 **Kontrol Discord** — perintah untuk membuat thread, membuat channel, dan mengirim pesan ke channel lain.
-- 📄 **Generate file markdown** — hasil generate dikirim sebagai lampiran `.md` yang bisa diunduh.
-- 🛡️ **Filter topik** — menolak pertanyaan di luar keamanan siber & permintaan menyerang sistem yang bukan milik penanya.
-- 📡 **Streaming output panjang** — jawaban panjang diproses streaming sehingga tidak kepotong di tengah (beda dengan relay yang gampang `529`/`truncated`).
+Pertanyaan di luar keamanan siber ditolak, begitu juga permintaan menyerang sistem yang bukan milik penanya.
 
-## Cara Pakai
+## Pakai
 
-Di server Discord, **mention bot** lalu tulis perintahnya, contoh:
+Mention bot, tulis perintahnya:
 
 ```
 @bangjago beri materi lengkap ctf jeopardy
@@ -22,95 +17,82 @@ Di server Discord, **mention bot** lalu tulis perintahnya, contoh:
 @bangjago buat file markdown berisi command linux
 @bangjago buat channel ctf-discussion
 @bangjago kirim pesan ke #general halo semua
-@bangjago login          # kalau AI belum login ke akun ChatGPT
+@bangjago login
 ```
 
-## Cara Menjalankan
+## Jalankan
 
-### 1. Prasyarat
-
-- Node.js 18+ (disarankan 20+)
-- Bot Discord (token dari [Discord Developer Portal](https://discord.com/developers/applications)) dengan permission:
-  - `Send Messages`
-  - `Manage Threads` (buat thread)
-  - `Manage Channels` (buat channel)
-  - `Read Message History`
-  - `Mention Everyone`/`Use slash commands` (opsional)
-- Akun ChatGPT (Free/Plus/Pro) sebagai backend AI via OAuth
-
-### 2. Setup environment
+Butuh Node.js 18+ dan akun ChatGPT. Bot Discord-nya perlu permission `Send Messages`, `Manage Threads`, `Manage Channels`, dan `Read Message History`.
 
 ```bash
-cp .env.example .env
-```
-
-Isi `DISCORD_TOKEN` di `.env`:
-
-```
-DISCORD_TOKEN=token_bot_kamu
-```
-
-> Bot memakai **OAuth ChatGPT** (bukan API key). Kalau store token belum ada, cukup bilang `@bangjago login` di Discord — bot kirim link login, buka di browser, lalu token tersimpan otomatis di `~/.config/bangjago/openai-oauth.json`.
-
-### 3. Instalasi & jalankan
-
-```bash
+cp .env.example .env      # isi DISCORD_TOKEN
 npm install
 npm start
 ```
 
-Log sukses menandakan bot online:
+Sukses kalau log-nya:
 
 ```
 OAuth OpenAI siap (exp ...)
 online: bangjago#8888
 ```
 
-### 4. Jalankan dengan Docker (opsional)
+Kalau muncul `provide token`, bot belum punya kredensial ChatGPT. Bilang `@bangjago login`, buka link yang dikirim, selesaikan di browser. Token tersimpan di `~/.config/bangjago/openai-oauth.json` dan terminal mencetak refresh token-nya.
+
+## Deploy
+
+Login OAuth tidak bisa dilakukan dari server. `client_id` yang dipakai hanya mendaftarkan `http://localhost:1455/auth/callback`, jadi callback publik selalu ditolak dengan `invalid_authorize_request`.
+
+Jadi: login lokal sekali, lalu pindahkan refresh token-nya sebagai env di server.
+
+```bash
+fly secrets set "OPENAI_REFRESH_TOKEN=<nilai>" -a bangjago
+```
+
+Kalau `OPENAI_REFRESH_TOKEN` ada, bot menukarnya jadi access token saat start dan tidak menjalankan login listener.
+
+Satu batasan: refresh token dirotasi setiap dipakai. Instance lokal dan instance deploy tidak bisa berbagi satu token — begitu yang satu refresh, yang lain mati. Jalankan satu saja.
+
+Docker:
 
 ```bash
 docker build -t bangjago .
 docker run -d --name bangjago \
-  -e DISCORD_TOKEN=token_bot_kamu \
-  -v bangjago-oauth:/root/.config/bangjago \
+  -e DISCORD_TOKEN=... \
+  -e OPENAI_REFRESH_TOKEN=... \
   bangjago
 ```
 
-- `-v bangjago-oauth:/root/.config/bangjago` menyimpan token OAuth supaya login ChatGPT tidak hilang saat container restart.
-- Port `1455` (callback login OAuth) hanya relevan untuk login dari host; lewati jika login tidak dipakai di dalam container (token bisa di-copy via volume).
-- Environment seperti `OPENAI_MODEL` bisa ditambahkan lewat `-e`.
+## Environment
 
-## Konfigurasi (`.env`)
-
-| Variabel          | Keterangan                                          |
-| ----------------- | --------------------------------------------------- |
-| `DISCORD_TOKEN`   | Token bot Discord (wajib)                            |
-| `OPENAI_MODEL`    | Model AI (default: `gpt-5.6-luna`)            |
-| `OPENAI_OAUTH_PATH` | Lokasi file token OAuth (default: `~/.config/bangjago/openai-oauth.json`) |
-| `OAUTH_PORT`      | Port callback OAuth (default: `1455`)                  |
-| `OAUTH_REDIRECT_URI` | URL callback OAuth — harus persis yang didaftarkan utk client (default: `http://localhost:1455/auth/callback`) |
+| Variabel              | Keterangan                                                            |
+| --------------------- | --------------------------------------------------------------------- |
+| `DISCORD_TOKEN`       | Token bot Discord. Wajib.                                             |
+| `OPENAI_REFRESH_TOKEN`| Refresh token OAuth. Untuk deploy; menang atas file token.             |
+| `OPENAI_MODEL`        | Default `gpt-5.6-luna`.                                               |
+| `OPENAI_OAUTH_PATH`   | Default `~/.config/bangjago/openai-oauth.json`.                        |
+| `OAUTH_PORT`          | Port callback login lokal. Default `1455`.                            |
 
 ## Struktur
 
 ```
 src/
-  index.ts            # entry: boot Discord, route pesan, login OAuth
-  config.ts           # system prompt & konstanta backend AI
+  index.ts            # boot Discord, route pesan
+  config.ts           # system prompt & konstanta backend
   discord/
-    say.ts            # pesan Discord: smartSplit (aman markdown) + reply
-    intents.ts        # deteksi perintah (thread, channel, file md, kirim pesan)
-    actions.ts        # eksekusi aksi Discord (thread/channel/file/send)
+    say.ts            # split pesan aman markdown + reply
+    intents.ts        # deteksi perintah
+    actions.ts        # eksekusi aksi Discord
   ai/
-    generate.ts       # streaming ChatGPT (SSE) + lanjut otomatis kalau terpotong
-  oauth.ts            # OAuth ChatGPT: login (PKCE+state), refresh, store mandiri
+    generate.ts       # streaming SSE + lanjut kalau terpotong
+  oauth.ts            # login PKCE, refresh, store token
 ```
 
-## Teknis Singkat
+## Catatan teknis
 
-- **OAuth ChatGPT**: bot login via `auth.openai.com` (PKCE + state, redirect `http://localhost:1455/auth/callback`). Refresh token otomatis.
-- **Streaming**: memanggil `chatgpt.com/backend-api/codex/responses` dengan `stream:true`, di-parse per event `response.output_text.delta` supaya output utuh & tidak dobel.
-- **Tanpa fallback ke opencode**: kredensial disimpan mandiri, tidak tergantung instalasi opencode.
-- **Anti-putus**: kalau stream terputus/empty, otomatis retry dengan backoff, dan jawaban panjang dilanjutkan berlapis (`MAX_CHUNKS`).
+Streaming lewat `chatgpt.com/backend-api/codex/responses` dengan `stream:true`, di-parse per event `response.output_text.delta`. Kalau stream putus atau kosong, retry dengan backoff; jawaban panjang dilanjutkan berlapis sampai `MAX_CHUNKS`.
+
+Kredensial disimpan sendiri, tidak bergantung instalasi opencode.
 
 ## Lisensi
 
