@@ -3,14 +3,12 @@ import { generateText } from "../ai/generate.js";
 import { say, sendTyping, smartSplit } from "./say.js";
 import type { Intent } from "./intents.js";
 
-// Notify typing saat request AI sedang jalan.
 function notify(msg: Message): () => void {
   return () => {
     void sendTyping(msg.channel);
   };
 }
 
-// menangani intent Discord. return true = sudah ditangani, false = bukan intent.
 export async function handleIntent(msg: Message, intent: Intent): Promise<boolean> {
   switch (intent.kind) {
     case "create_markdown_file": {

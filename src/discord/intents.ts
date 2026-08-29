@@ -5,8 +5,6 @@ export type Intent =
   | { kind: "create_markdown_file"; filename: string; content: string }
   | { kind: "none" };
 
-// deteksi intent Discord dari teks user (tanpa LLM) supaya aksi
-// seperti buat thread / channel bisa jalan cepat & stabil.
 export function parseIntent(prompt: string): Intent {
   const p = prompt.trim();
   const low = p.toLowerCase();
@@ -39,7 +37,6 @@ export function parseIntent(prompt: string): Intent {
     return { kind: "send_message", channel: sendMatch[1], text };
   }
 
-  // buat/simpan file markdown (kirim sebagai attachment .md)
   if (
     /(?:buat|bikin|buatkan|generate|simpan|save|tulis)\s+(?:sebuah\s+)?(?:file|dokumen)\s*(?:mark|m\.?d|md)/i.test(
       low,

@@ -28,7 +28,6 @@ const retriable = (e: unknown): boolean => {
 const backoff = (attempt: number) =>
   Math.min(30000, 3000 * 2 ** (attempt - 1)) + Math.floor(Math.random() * 1000);
 
-// parse SSE dari chatgpt.com: kumpulkan teks hanya dari event delta (anti double/treble).
 export function parseSSE(sse: string): {
   text: string;
   finish: string;
@@ -74,7 +73,6 @@ function systemToInput(): any[] {
   ];
 }
 
-// naikkan local message[] jadi bentuk input endpoint respons OpenAI/Codex.
 function messagesToInput(msgs: any[]): any[] {
   const out: any[] = systemToInput();
   for (const m of msgs) {
@@ -83,7 +81,6 @@ function messagesToInput(msgs: any[]): any[] {
     if (Array.isArray(m.content)) content = m.content;
     else content = [{ type: "input_text", text: String(m.content) }];
     try {
-      // kalau sudah berbentuk schema input opencode, pakai langsung
       const parsed = typeof m.content === "string" ? JSON.parse(m.content) : null;
       if (parsed?.role === "user" && parsed?.content) return parsed.content;
     } catch {}
@@ -110,8 +107,6 @@ async function oaiFetch(input: any[]): Promise<Response> {
   });
 }
 
-// satu panggilan AI (streaming). Tanpa tool_calls — tool Discord ditangani
-// lokal di modul action, jadi model murni urus teks.
 export async function apiCall(
   messages: any[],
   notify?: () => void,
@@ -143,7 +138,6 @@ export async function apiCall(
   throw lastErr ?? new Error("apiCall gagal");
 }
 
-// generate teks, lanjutkan otomatis kalau kepotong di tengah.
 export async function generateText(
   prompt: string,
   notify?: () => void,

@@ -18,13 +18,11 @@ const client = new Client({
   ],
 });
 
-// muat kredensial OAuth dari store mandiri (login sekaligus cek status).
 loadOAuthToken().then(
   (t) => console.log(`OAuth OpenAI siap (exp ${new Date(t.expires).toISOString()})`),
   (e) => console.log("OAuth OpenAI belum login:", e instanceof Error ? e.message : e),
 );
 
-// selalu siapkan callback login dari awal biar link OAuth bisa langsung dipakai.
 startLoginListener();
 
 client.once(Events.ClientReady, (c) => console.log(`online: ${c.user.tag}`));
@@ -35,7 +33,6 @@ client.on(Events.MessageCreate, async (msg) => {
   if (!prompt) return;
 
   try {
-    // perintah login OAuth
     if (/^(login|hubung(kan|in)?|connect|auth|oauth|masuk)/i.test(prompt) && prompt.length < 40) {
       const url = getLoginUrl();
       startLoginListener();

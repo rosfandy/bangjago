@@ -4,14 +4,11 @@ import { createServer as httpCreateServer, type Server } from "node:http";
 import os from "node:os";
 import { join, dirname } from "node:path";
 
-// store kredensial mandiri bot (tidak numpang opencode).
 export const OWN_PATH =
   process.env.OPENAI_OAUTH_PATH ||
   join(os.homedir(), ".config", "bangjago", "openai-oauth.json");
 
 export const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann";
-// redirect URI & port callback bisa di-ubah lewat env, harus persis kayak yang
-// didaftarkan buat client ini (default: dipakai opencode).
 function defaultRedirect() {
   return `http://localhost:${process.env.OAUTH_PORT || 1455}/auth/callback`;
 }
@@ -118,8 +115,6 @@ export async function refreshAccessToken(): Promise<void> {
   }
 }
 
-// --- login flow (PKCE + state) ---
-
 function b64u(buf: Buffer): string {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -134,7 +129,6 @@ function randomState(): string {
   return b64u(randomBytes(16));
 }
 
-// buat link login + siapkan callback server biar tinggal klik.
 export function getLoginUrl(): string {
   const { verifier, challenge } = pkcePair();
   const state = randomState();
@@ -174,7 +168,6 @@ async function exchangeCode(code: string): Promise<{ access: string; refresh: st
   return { access, refresh, expires: now() + (j.expires_in || 3600) * 1000 };
 }
 
-// listener HTTP di localhost:PORT/auth/callback buat nangkap callback login.
 export function startLoginListener(): void {
   if (loginListener) return;
   loginListener = httpCreateServer(async (req, res) => {

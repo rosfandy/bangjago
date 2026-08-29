@@ -2,8 +2,6 @@ import type { Message } from "discord.js";
 
 const MAX_MSG = 1900;
 
-// pecah teks jadi beberapa pesan tanpa merusak markdown.
-// track fence ``` supaya code block gak pernah kepotong di tengah.
 export function smartSplit(text: string, max = MAX_MSG): string[] {
   const chunks: string[] = [];
   let current = "";
@@ -41,7 +39,6 @@ export function smartSplit(text: string, max = MAX_MSG): string[] {
   return chunks;
 }
 
-// sendTyping aman untuk tipe channel apapun (discord.js union type).
 export async function sendTyping(channel: any): Promise<void> {
   try {
     await channel.sendTyping();
@@ -50,7 +47,6 @@ export async function sendTyping(channel: any): Promise<void> {
   }
 }
 
-// reply bisa gagal kalau pesan asli dihapus; jangan sampai crash proses.
 export async function say(msg: Message, text: string): Promise<void> {
   if (!text) text = "(kosong)";
   const parts = smartSplit(text);
