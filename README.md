@@ -1,14 +1,14 @@
 # Bangjago
 
-Bot Discord untuk tanya-jawab keamanan siber: pentest, jaringan, kripto, malware analysis, hardening, incident response, secure coding, OSINT, CTF, forensik.
+Discord bot for cyber security Q&A: pentesting, networking, crypto, malware analysis, hardening, incident response, secure coding, OSINT, CTF, forensics.
 
-Backend-nya akun ChatGPT lewat OAuth, bukan API key, jadi tidak ada biaya per-token. Jawaban di-stream supaya tidak kepotong di tengah. Bot juga bisa bikin thread, bikin channel, dan kirim file.
+The backend is a ChatGPT account over OAuth rather than an API key, so there is no per-token cost. Responses are streamed so long answers don't get cut off mid-way. The bot can also create threads, create channels, and send files.
 
-Pertanyaan di luar keamanan siber ditolak, begitu juga permintaan menyerang sistem yang bukan milik penanya.
+Questions outside cyber security are refused, as are requests to attack systems the asker doesn't own.
 
 ## Usage
 
-Mention bot, tulis perintahnya:
+Mention the bot, then write the command:
 
 ```
 @bangjago beri materi lengkap ctf jeopardy
@@ -22,36 +22,36 @@ Mention bot, tulis perintahnya:
 
 ## Setup
 
-Butuh Node.js 18+ dan akun ChatGPT. Bot Discord-nya perlu permission `Send Messages`, `Manage Threads`, `Manage Channels`, dan `Read Message History`.
+Requires Node.js 18+ and a ChatGPT account. The Discord bot needs `Send Messages`, `Manage Threads`, `Manage Channels`, and `Read Message History`.
 
 ```bash
-cp .env.example .env      # isi DISCORD_TOKEN
+cp .env.example .env      # fill in DISCORD_TOKEN
 npm install
 npm start
 ```
 
-Sukses kalau log-nya:
+It's working when the log reads:
 
 ```
 OAuth OpenAI siap (exp ...)
 online: bangjago#8888
 ```
 
-Kalau muncul `provide token`, bot belum punya kredensial ChatGPT. Bilang `@bangjago login`, buka link yang dikirim, selesaikan di browser. Token tersimpan di `~/.config/bangjago/openai-oauth.json` dan terminal mencetak refresh token-nya.
+If you see `provide token`, the bot has no ChatGPT credentials yet. Say `@bangjago login`, open the link it sends, and finish in the browser. The token is saved to `~/.config/bangjago/openai-oauth.json` and the terminal prints the refresh token.
 
 ## Deployment
 
-Login OAuth tidak bisa dilakukan dari server. `client_id` yang dipakai hanya mendaftarkan `http://localhost:1455/auth/callback`, jadi callback publik selalu ditolak dengan `invalid_authorize_request`.
+OAuth login can't be done from a server. The `client_id` in use only registers `http://localhost:1455/auth/callback`, so a public callback is always rejected with `invalid_authorize_request`.
 
-Jadi: login lokal sekali, lalu pindahkan refresh token-nya sebagai env di server.
+So: log in locally once, then move the refresh token to the server as an env var.
 
 ```bash
-fly secrets set "OPENAI_REFRESH_TOKEN=<nilai>" -a bangjago
+fly secrets set "OPENAI_REFRESH_TOKEN=<value>" -a bangjago
 ```
 
-Kalau `OPENAI_REFRESH_TOKEN` ada, bot menukarnya jadi access token saat start dan tidak menjalankan login listener.
+When `OPENAI_REFRESH_TOKEN` is set, the bot exchanges it for an access token at startup and skips the login listener.
 
-Satu batasan: refresh token dirotasi setiap dipakai. Instance lokal dan instance deploy tidak bisa berbagi satu token — begitu yang satu refresh, yang lain mati. Jalankan satu saja.
+One constraint: the refresh token rotates on every use. A local instance and a deployed instance can't share one token — as soon as one refreshes, the other dies. Run only one.
 
 Docker:
 
@@ -67,32 +67,32 @@ docker run -d --name bangjago \
 
 | Variable              | Description                                                           |
 | --------------------- | --------------------------------------------------------------------- |
-| `DISCORD_TOKEN`       | Token bot Discord. Wajib.                                             |
-| `OPENAI_REFRESH_TOKEN`| Refresh token OAuth. Untuk deploy; menang atas file token.             |
-| `OPENAI_MODEL`        | Default `gpt-5.6-luna`.                                               |
-| `OPENAI_OAUTH_PATH`   | Default `~/.config/bangjago/openai-oauth.json`.                        |
-| `OAUTH_PORT`          | Port callback login lokal. Default `1455`.                            |
+| `DISCORD_TOKEN`       | Discord bot token. Required.                                          |
+| `OPENAI_REFRESH_TOKEN`| OAuth refresh token. For deployment; takes precedence over the token file. |
+| `OPENAI_MODEL`        | Defaults to `gpt-5.6-luna`.                                           |
+| `OPENAI_OAUTH_PATH`   | Defaults to `~/.config/bangjago/openai-oauth.json`.                   |
+| `OAUTH_PORT`          | Local login callback port. Defaults to `1455`.                        |
 
 ## Structure
 
 ```
 src/
-  index.ts            # boot Discord, route pesan
-  config.ts           # system prompt & konstanta backend
+  index.ts            # boot Discord, route messages
+  config.ts           # system prompt & backend constants
   discord/
-    say.ts            # split pesan aman markdown + reply
-    intents.ts        # deteksi perintah
-    actions.ts        # eksekusi aksi Discord
+    say.ts            # markdown-safe message splitting + reply
+    intents.ts        # command detection
+    actions.ts        # Discord action execution
   ai/
-    generate.ts       # streaming SSE + lanjut kalau terpotong
-  oauth.ts            # login PKCE, refresh, store token
+    generate.ts       # SSE streaming + continuation when truncated
+  oauth.ts            # PKCE login, refresh, token store
 ```
 
 ## Notes
 
-Streaming lewat `chatgpt.com/backend-api/codex/responses` dengan `stream:true`, di-parse per event `response.output_text.delta`. Kalau stream putus atau kosong, retry dengan backoff; jawaban panjang dilanjutkan berlapis sampai `MAX_CHUNKS`.
+Streaming goes through `chatgpt.com/backend-api/codex/responses` with `stream:true`, parsed per `response.output_text.delta` event. If the stream drops or comes back empty, it retries with backoff; long answers continue in layers up to `MAX_CHUNKS`.
 
-Kredensial disimpan sendiri, tidak bergantung instalasi opencode.
+Credentials are stored independently, with no dependency on an opencode installation.
 
 ## License
 
