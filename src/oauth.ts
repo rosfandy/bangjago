@@ -10,12 +10,15 @@ export const OWN_PATH =
   join(os.homedir(), ".config", "bangjago", "openai-oauth.json");
 
 export const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann";
-// redirect & port harus persis kayak yang didaftarin buat client ini
-// (dipakai opencode). Bukan 2017 / tanpa path!
-export const REDIRECT_URI = "http://localhost:1455/auth/callback";
+// redirect URI & port callback bisa di-ubah lewat env, harus persis kayak yang
+// didaftarkan buat client ini (default: dipakai opencode).
+function defaultRedirect() {
+  return `http://localhost:${process.env.OAUTH_PORT || 1455}/auth/callback`;
+}
+export const REDIRECT_URI = process.env.OAUTH_REDIRECT_URI || defaultRedirect();
 const AUTH_URL = "https://auth.openai.com/oauth/authorize";
 const TOKEN_URL = "https://auth.openai.com/oauth/token";
-const PORT = 1455;
+export const PORT = Number(process.env.OAUTH_PORT) || 1455;
 const SCOPE = "openid profile email offline_access";
 
 let cached: { access: string; refresh: string; expires: number } | null = null;
@@ -190,10 +193,15 @@ export function startLoginListener(): void {
       }
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
-      if (!pending || state !== pending.state) {
+      if (!state || !pending || state !== pending.state) {
         const msg = code ? "Invalid OAuth state" : "Missing authorization code";
         res.writeHead(400, { "Content-Type": "text/html" });
         res.end(`<h3>${msg}</h3>`);
+        return;
+      }
+      if (!code) {
+        res.writeHead(400, { "Content-Type": "text/html" });
+        res.end("<h3>Missing authorization code</h3>");
         return;
       }
       const tokens = await exchangeCode(code);

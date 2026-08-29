@@ -66,6 +66,20 @@ OAuth OpenAI siap (exp ...)
 online: bangjago#8888
 ```
 
+### 4. Jalankan dengan Docker (opsional)
+
+```bash
+docker build -t bangjago .
+docker run -d --name bangjago \
+  -e DISCORD_TOKEN=token_bot_kamu \
+  -v bangjago-oauth:/root/.config/bangjago \
+  bangjago
+```
+
+- `-v bangjago-oauth:/root/.config/bangjago` menyimpan token OAuth supaya login ChatGPT tidak hilang saat container restart.
+- Port `1455` (callback login OAuth) hanya relevan untuk login dari host; lewati jika login tidak dipakai di dalam container (token bisa di-copy via volume).
+- Environment seperti `OPENAI_MODEL` bisa ditambahkan lewat `-e`.
+
 ## Konfigurasi (`.env`)
 
 | Variabel          | Keterangan                                          |
@@ -73,13 +87,22 @@ online: bangjago#8888
 | `DISCORD_TOKEN`   | Token bot Discord (wajib)                            |
 | `OPENAI_MODEL`    | Model AI (default: `gpt-5.6-luna`)            |
 | `OPENAI_OAUTH_PATH` | Lokasi file token OAuth (default: `~/.config/bangjago/openai-oauth.json`) |
+| `OAUTH_PORT`      | Port callback OAuth (default: `1455`)                  |
+| `OAUTH_REDIRECT_URI` | URL callback OAuth — harus persis yang didaftarkan utk client (default: `http://localhost:1455/auth/callback`) |
 
 ## Struktur
 
 ```
 src/
-  index.ts    # bot Discord: intent, handler, parser SSE, generate teks
-  oauth.ts    # OAuth ChatGPT: login (PKCE), refresh token, store mandiri
+  index.ts            # entry: boot Discord, route pesan, login OAuth
+  config.ts           # system prompt & konstanta backend AI
+  discord/
+    say.ts            # pesan Discord: smartSplit (aman markdown) + reply
+    intents.ts        # deteksi perintah (thread, channel, file md, kirim pesan)
+    actions.ts        # eksekusi aksi Discord (thread/channel/file/send)
+  ai/
+    generate.ts       # streaming ChatGPT (SSE) + lanjut otomatis kalau terpotong
+  oauth.ts            # OAuth ChatGPT: login (PKCE+state), refresh, store mandiri
 ```
 
 ## Teknis Singkat
