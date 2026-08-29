@@ -6,7 +6,7 @@ Backend-nya akun ChatGPT lewat OAuth, bukan API key, jadi tidak ada biaya per-to
 
 Pertanyaan di luar keamanan siber ditolak, begitu juga permintaan menyerang sistem yang bukan milik penanya.
 
-## Pakai
+## Usage
 
 Mention bot, tulis perintahnya:
 
@@ -20,7 +20,7 @@ Mention bot, tulis perintahnya:
 @bangjago login
 ```
 
-## Jalankan
+## Setup
 
 Butuh Node.js 18+ dan akun ChatGPT. Bot Discord-nya perlu permission `Send Messages`, `Manage Threads`, `Manage Channels`, dan `Read Message History`.
 
@@ -39,7 +39,7 @@ online: bangjago#8888
 
 Kalau muncul `provide token`, bot belum punya kredensial ChatGPT. Bilang `@bangjago login`, buka link yang dikirim, selesaikan di browser. Token tersimpan di `~/.config/bangjago/openai-oauth.json` dan terminal mencetak refresh token-nya.
 
-## Deploy
+## Deployment
 
 Login OAuth tidak bisa dilakukan dari server. `client_id` yang dipakai hanya mendaftarkan `http://localhost:1455/auth/callback`, jadi callback publik selalu ditolak dengan `invalid_authorize_request`.
 
@@ -65,7 +65,7 @@ docker run -d --name bangjago \
 
 ## Environment
 
-| Variabel              | Keterangan                                                            |
+| Variable              | Description                                                           |
 | --------------------- | --------------------------------------------------------------------- |
 | `DISCORD_TOKEN`       | Token bot Discord. Wajib.                                             |
 | `OPENAI_REFRESH_TOKEN`| Refresh token OAuth. Untuk deploy; menang atas file token.             |
@@ -73,7 +73,7 @@ docker run -d --name bangjago \
 | `OPENAI_OAUTH_PATH`   | Default `~/.config/bangjago/openai-oauth.json`.                        |
 | `OAUTH_PORT`          | Port callback login lokal. Default `1455`.                            |
 
-## Struktur
+## Structure
 
 ```
 src/
@@ -88,12 +88,12 @@ src/
   oauth.ts            # login PKCE, refresh, store token
 ```
 
-## Catatan teknis
+## Notes
 
 Streaming lewat `chatgpt.com/backend-api/codex/responses` dengan `stream:true`, di-parse per event `response.output_text.delta`. Kalau stream putus atau kosong, retry dengan backoff; jawaban panjang dilanjutkan berlapis sampai `MAX_CHUNKS`.
 
 Kredensial disimpan sendiri, tidak bergantung instalasi opencode.
 
-## Lisensi
+## License
 
 MIT
