@@ -209,7 +209,7 @@ export function startLoginListener(): void {
       res.end(`<h3>Login gagal: ${e instanceof Error ? e.message : String(e)}</h3>`);
     }
   });
-  loginListener.listen(PORT, process.env.OAUTH_HOST || "0.0.0.0", () =>
+  loginListener.listen(PORT, "localhost", () =>
     console.log(`OAuth callback listening on ${REDIRECT_URI}`),
   );
 }

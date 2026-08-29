@@ -7,13 +7,10 @@ app = 'bangjago'
 primary_region = 'sin'
 
 [build]
-[http_service]
-  internal_port = 1455
-  force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+
+[mounts]
+  source = 'bangjago_data'
+  destination = '/root/.config/bangjago'
 
 [[vm]]
   memory = '256mb'
